@@ -1,5 +1,5 @@
 // frontend/js/app.js
-const API = 'http://localhost:3000/api';
+const API = '/api';
 let currentUser = null;
 
 // ── UTILS ──────────────────────────────────────
