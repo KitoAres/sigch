@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIGCH — Sistema de Gestión de Citas e Historiales Clínicos</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ══ LOGIN SCREEN ══════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <h2>SIGCH</h2>
+    <p>Sistema de Gestión de Citas e Historiales Clínicos</p>
+    <div id="login-alert" class="alert"></div>
+    <form id="login-form">
+      <div class="form-group">
+        <label>Correo electrónico</label>
+        <input id="login-email" type="email" value="admin@sigch.com" required placeholder="correo@ejemplo.com">
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input id="login-pass" type="password" value="password" required placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px">
+        Iniciar sesión →
+      </button>
+    </form>
+    <p style="margin-top:16px;color:var(--text2);font-size:.78rem;">
+      Demo: admin@sigch.com / password
+    </p>
+  </div>
+</div>
+
+<!-- ══ SIDEBAR ═══════════════════════════════════════════════════ -->
+<aside id="sidebar" style="display:none">
+  <div class="logo">
+    <h1>SIGCH</h1>
+    <span>Centro Psicológico</span>
+  </div>
+  <nav>
+    <a href="#" data-nav="dashboard" class="active">
+      <span class="icon">⬛</span> Dashboard
+    </a>
+    <a href="#" data-nav="citas">
+      <span class="icon">📅</span> Citas
+    </a>
+    <a href="#" data-nav="calendario">
+      <span class="icon">🗓</span> Calendario
+    </a>
+    <a href="#" data-nav="pacientes">
+      <span class="icon">🧑‍⚕️</span> Pacientes
+    </a>
+    <a href="#" data-nav="psicologos">
+      <span class="icon">🩺</span> Psicólogos
+    </a>
+    <a href="#" data-nav="usuarios">
+      <span class="icon">👤</span> Usuarios
+    </a>
+  </nav>
+  <div class="user-box">
+    <div class="name" id="user-name">—</div>
+    <div class="role" id="user-role">—</div>
+    <span class="logout" id="logout-btn">⬡ Cerrar sesión</span>
+  </div>
+</aside>
+
+<!-- ══ MAIN CONTENT ═══════════════════════════════════════════════ -->
+<main id="main" style="display:none">
+
+  <!-- DASHBOARD -->
+  <section id="sec-dashboard" class="section active">
+    <div class="section-header">
+      <div>
+        <h2>Dashboard</h2>
+        <p>Resumen operativo del consultorio</p>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="num" id="stat-total-citas">—</div>
+        <div class="lbl">Total de citas</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-programadas">—</div>
+        <div class="lbl">Programadas</div>
+      </div>
+      <div class="stat-card green">
+        <div class="num" id="stat-realizadas">—</div>
+        <div class="lbl">Realizadas</div>
+      </div>
+      <div class="stat-card red">
+        <div class="num" id="stat-canceladas">—</div>
+        <div class="lbl">Canceladas</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="num" id="stat-pacientes">—</div>
+        <div class="lbl">Pacientes activos</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-psicologos">—</div>
+        <div class="lbl">Psicólogos activos</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <strong>Próximas citas programadas</strong>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Fecha y Hora</th><th>Paciente</th><th>Psicólogo</th><th>Motivo</th><th>Estado</th>
+        </tr></thead>
+        <tbody id="dashboard-citas"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CITAS -->
+  <section id="sec-citas" class="section">
+    <div class="section-header">
+      <div><h2>Gestión de Citas</h2><p>Agenda, reprograma y cancela consultas</p></div>
+      <button id="btn-nueva-cita" class="btn btn-primary">+ Nueva Cita</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Fecha y Hora</th><th>Paciente</th><th>Psicólogo</th><th>Motivo</th><th>Estado</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="citas-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CALENDARIO -->
+  <section id="sec-calendario" class="section">
+    <div class="section-header">
+      <div><h2>Calendario</h2><p>Vista mensual de citas programadas</p></div>
+    </div>
+    <div class="calendar-nav">
+      <button id="cal-prev">← Anterior</button>
+      <span id="cal-title"></span>
+      <button id="cal-next">Siguiente →</button>
+    </div>
+    <div class="calendar-grid" id="cal-grid">
+      <div class="cal-header">Dom</div>
+      <div class="cal-header">Lun</div>
+      <div class="cal-header">Mar</div>
+      <div class="cal-header">Mié</div>
+      <div class="cal-header">Jue</div>
+      <div class="cal-header">Vie</div>
+      <div class="cal-header">Sáb</div>
+    </div>
+  </section>
+
+  <!-- PACIENTES -->
+  <section id="sec-pacientes" class="section">
+    <div class="section-header">
+      <div><h2>Pacientes</h2><p>Registro y gestión de pacientes</p></div>
+      <button id="btn-nuevo-paciente" class="btn btn-primary">+ Nuevo Paciente</button>
+    </div>
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <input type="text" id="search-paciente" class="search-input" placeholder="🔍 Buscar por nombre o CI…">
+      </div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Nombre Completo</th><th>CI</th><th>Fecha Nac.</th><th>Teléfono</th><th>Estado</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="pacientes-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- PSICÓLOGOS -->
+  <section id="sec-psicologos" class="section">
+    <div class="section-header">
+      <div><h2>Psicólogos</h2><p>Profesionales del consultorio</p></div>
+      <button id="btn-nuevo-psicologo" class="btn btn-primary">+ Nuevo Psicólogo</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Nombre Completo</th><th>Especialidad</th><th>Reg. Profesional</th><th>Estado</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="psicologos-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- USUARIOS -->
+  <section id="sec-usuarios" class="section">
+    <div class="section-header">
+      <div><h2>Usuarios del Sistema</h2><p>Control de acceso y roles</p></div>
+      <button id="btn-nuevo-usuario" class="btn btn-primary">+ Nuevo Usuario</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Nombre Completo</th><th>Email</th><th>Rol</th><th>Estado</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="usuarios-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══ MODALS ═════════════════════════════════════════════════════ -->
+
+<!-- Modal: Usuario -->
+<div id="modal-usuario" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-usuario-title">Nuevo Usuario</h3>
+      <button class="modal-close">✕</button>
+    </div>
+    <div id="modal-alert" class="alert"></div>
+    <form id="form-usuario">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre Completo *</label>
+          <input id="u-nombre" type="text" required maxlength="100" placeholder="Nombre y apellidos">
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input id="u-email" type="email" required maxlength="150" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input id="u-pass" type="password" minlength="8" placeholder="Mínimo 8 caracteres">
+        </div>
+        <div class="form-group">
+          <label>Rol *</label>
+          <select id="u-rol" required>
+            <option value="">— Seleccionar —</option>
+            <option value="administrador">Administrador</option>
+            <option value="psicologo">Psicólogo</option>
+            <option value="recepcionista">Recepcionista</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-edit modal-cancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Psicólogo -->
+<div id="modal-psicologo" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-psicologo-title">Nuevo Psicólogo</h3>
+      <button class="modal-close">✕</button>
+    </div>
+    <div id="modal-alert-ps" class="alert"></div>
+    <form id="form-psicologo">
+      <div class="form-group">
+        <label>Usuario del Sistema *</label>
+        <select id="ps-id-usuario" required>
+          <option value="">— Cargando usuarios —</option>
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre Completo *</label>
+          <input id="ps-nombre" type="text" required maxlength="100" placeholder="Dr. Nombre Apellido">
+        </div>
+        <div class="form-group">
+          <label>Especialidad *</label>
+          <input id="ps-especialidad" type="text" required maxlength="100" placeholder="Psicología Clínica">
+        </div>
+        <div class="form-group">
+          <label>Registro Profesional *</label>
+          <input id="ps-registro" type="text" required maxlength="50" placeholder="REG-001-LP">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-edit modal-cancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Paciente -->
+<div id="modal-paciente" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-paciente-title">Nuevo Paciente</h3>
+      <button class="modal-close">✕</button>
+    </div>
+    <div id="modal-alert-pac" class="alert"></div>
+    <form id="form-paciente">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre Completo *</label>
+          <input id="p-nombre" type="text" required maxlength="100" placeholder="Nombre y apellidos">
+        </div>
+        <div class="form-group">
+          <label>Carnet de Identidad (CI) *</label>
+          <input id="p-ci" type="text" required maxlength="20" placeholder="12345678">
+        </div>
+        <div class="form-group">
+          <label>Fecha de Nacimiento *</label>
+          <input id="p-fnac" type="date" required>
+        </div>
+        <div class="form-group">
+          <label>Teléfono *</label>
+          <input id="p-tel" type="text" required maxlength="20" placeholder="71234567">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input id="p-email" type="email" maxlength="150" placeholder="correo@ejemplo.com (opcional)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Dirección</label>
+        <textarea id="p-direccion" rows="2" placeholder="Dirección domiciliaria (opcional)"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-edit modal-cancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Cita -->
+<div id="modal-cita" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-cita-title">Nueva Cita</h3>
+      <button class="modal-close">✕</button>
+    </div>
+    <div id="modal-alert-cita" class="alert"></div>
+    <form id="form-cita">
+      <div class="form-group">
+        <label>Paciente *</label>
+        <select id="c-paciente" required>
+          <option value="">— Seleccionar paciente —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Psicólogo *</label>
+        <select id="c-psicologo" required>
+          <option value="">— Seleccionar psicólogo —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Fecha y Hora *</label>
+        <input id="c-fecha" type="datetime-local" required>
+      </div>
+      <div class="form-group">
+        <label>Motivo de Consulta</label>
+        <textarea id="c-motivo" rows="3" placeholder="Descripción del motivo (opcional)"></textarea>
+      </div>
+      <div class="form-group" id="c-estado-group" style="display:none">
+        <label>Estado</label>
+        <select id="c-estado">
+          <option value="programada">Programada</option>
+          <option value="realizada">Realizada</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-edit modal-cancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Cita</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
