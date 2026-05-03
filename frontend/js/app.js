@@ -1,7 +1,52 @@
 // frontend/js/app.js
 const API = '/api';
 let currentUser = null;
+// ── PERMISOS POR ROL ───────────────────────────
+const permisosPorRol = {
+  administrador: ['dashboard', 'citas', 'calendario', 'pacientes', 'psicologos', 'usuarios'],
+  recepcionista: ['dashboard', 'citas', 'calendario', 'pacientes'],
+  psicologo: ['dashboard', 'citas', 'calendario', 'pacientes']
+};
 
+function tienePermiso(section) {
+  if (!currentUser) return false;
+  return permisosPorRol[currentUser.rol]?.includes(section);
+}
+
+function aplicarPermisosUI() {
+  if (!currentUser) return;
+
+  document.querySelectorAll('[data-nav]').forEach(link => {
+    const section = link.dataset.nav;
+
+    if (tienePermiso(section)) {
+      link.style.display = 'flex';
+    } else {
+      link.style.display = 'none';
+    }
+  });
+
+  // Botones de creación por rol
+  if ($('btn-nuevo-usuario')) {
+    $('btn-nuevo-usuario').style.display =
+      currentUser.rol === 'administrador' ? 'inline-flex' : 'none';
+  }
+
+  if ($('btn-nuevo-psicologo')) {
+    $('btn-nuevo-psicologo').style.display =
+      currentUser.rol === 'administrador' ? 'inline-flex' : 'none';
+  }
+
+  if ($('btn-nuevo-paciente')) {
+    $('btn-nuevo-paciente').style.display =
+      ['administrador', 'recepcionista'].includes(currentUser.rol) ? 'inline-flex' : 'none';
+  }
+
+  if ($('btn-nueva-cita')) {
+    $('btn-nueva-cita').style.display =
+      ['administrador', 'recepcionista'].includes(currentUser.rol) ? 'inline-flex' : 'none';
+  }
+}
 // ── UTILS ──────────────────────────────────────
 const $ = id => document.getElementById(id);
 const qs = sel => document.querySelector(sel);
