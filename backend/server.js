@@ -19,6 +19,11 @@ app.use('/api/psicologos', require('./routes/psicologos'));
 app.use('/api/pacientes',  require('./routes/pacientes'));
 app.use('/api/citas',      require('./routes/citas'));
 app.use('/api/historial',  require('./routes/historial'));
+app.use('/api/horarios',     require('./routes/horarios'));
+app.use('/api/sesiones',     require('./routes/sesiones'));
+app.use('/api/recordatorios', require('./routes/recordatorios'));
+app.use('/api/auditoria',    require('./routes/auditoria'));
+app.use('/api/reportes',     require('./routes/reportes'));
 
 // Ruta raíz → index.html
 app.get('/', (req, res) => {
