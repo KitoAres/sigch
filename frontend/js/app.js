@@ -35,6 +35,20 @@ async function api(method, endpoint, body) {
   return data;
 }
 
+async function registrarAuditoria(modulo, accion, descripcion) {
+  try {
+    if (!currentUser) return;
+
+    await api('POST', '/auditoria', {
+      modulo,
+      accion,
+      descripcion
+    });
+  } catch (err) {
+    console.warn('No se pudo registrar auditoría:', err.message);
+  }
+}
+
 function fmtDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleString('es-BO', {
