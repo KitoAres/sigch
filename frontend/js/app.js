@@ -695,10 +695,11 @@ window.deletePaciente = async (id, nombre) => {
   if (!confirm(`¿Desactivar al paciente "${nombre}"?`)) return;
 
   try {
-    await api('DELETE', `/pacientes/${id}`);
-    loadPacientes();
+    const respuesta = await api('DELETE', `/pacientes/${id}`);
+    alert(respuesta.message || 'Paciente desactivado correctamente.');
+    await loadPacientes();
   } catch (err) {
-    alert(err.message);
+    alert('Error al desactivar paciente: ' + err.message);
   }
 };
 
