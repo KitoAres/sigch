@@ -491,7 +491,7 @@ async function loadPsicologos() {
         <td>${activoBadge(p.activo)}</td>
         <td>
           <button class="btn btn-edit btn-sm" onclick="editPsicologo(${p.id_psicologo})">✏ Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="deletePsicologo(${p.id_psicologo}, ${jsString(p.nombre_completo)})">✕</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePsicologo(${p.id_psicologo})">✕</button>
         </td>
       </tr>
     `).join('');
@@ -525,13 +525,13 @@ window.editPsicologo = async id => {
   }
 };
 
-window.deletePsicologo = async (id, nombre) => {
+window.deletePsicologo = async id => {
   if (!puedeGestionarPsicologos()) {
     alert('No tiene permiso para eliminar psicólogos.');
     return;
   }
 
-  if (!confirm(`¿Desactivar al psicólogo "${nombre}"?`)) return;
+  if (!confirm('¿Desactivar este psicólogo?')) return;
 
   try {
     const respuesta = await api('DELETE', `/psicologos/${id}`);
