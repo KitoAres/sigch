@@ -1,52 +1,7 @@
 // frontend/js/app.js
 const API = '/api';
 let currentUser = null;
-// ── PERMISOS POR ROL ───────────────────────────
-const permisosPorRol = {
-  administrador: ['dashboard', 'citas', 'calendario', 'pacientes', 'psicologos', 'usuarios'],
-  recepcionista: ['dashboard', 'citas', 'calendario', 'pacientes'],
-  psicologo: ['dashboard', 'citas', 'calendario', 'pacientes']
-};
 
-function tienePermiso(section) {
-  if (!currentUser) return false;
-  return permisosPorRol[currentUser.rol]?.includes(section);
-}
-
-function aplicarPermisosUI() {
-  if (!currentUser) return;
-
-  document.querySelectorAll('[data-nav]').forEach(link => {
-    const section = link.dataset.nav;
-
-    if (tienePermiso(section)) {
-      link.style.display = 'flex';
-    } else {
-      link.style.display = 'none';
-    }
-  });
-
-  // Botones de creación por rol
-  if ($('btn-nuevo-usuario')) {
-    $('btn-nuevo-usuario').style.display =
-      currentUser.rol === 'administrador' ? 'inline-flex' : 'none';
-  }
-
-  if ($('btn-nuevo-psicologo')) {
-    $('btn-nuevo-psicologo').style.display =
-      currentUser.rol === 'administrador' ? 'inline-flex' : 'none';
-  }
-
-  if ($('btn-nuevo-paciente')) {
-    $('btn-nuevo-paciente').style.display =
-      ['administrador', 'recepcionista'].includes(currentUser.rol) ? 'inline-flex' : 'none';
-  }
-
-  if ($('btn-nueva-cita')) {
-    $('btn-nueva-cita').style.display =
-      ['administrador', 'recepcionista'].includes(currentUser.rol) ? 'inline-flex' : 'none';
-  }
-}
 // ── UTILS ──────────────────────────────────────
 const $ = id => document.getElementById(id);
 const qs = sel => document.querySelector(sel);
@@ -64,17 +19,30 @@ async function api(method, endpoint, body) {
     method,
     headers: { 'Content-Type': 'application/json' }
   };
+
+  if (currentUser) {
+    opts.headers['x-user-id'] = currentUser.id_usuario;
+    opts.headers['x-user-rol'] = currentUser.rol;
+  }
+
   if (body) opts.body = JSON.stringify(body);
+
   const res = await fetch(API + endpoint, opts);
   const data = await res.json();
+
   if (!res.ok) throw new Error(data.error || 'Error desconocido');
+
   return data;
 }
 
 function fmtDate(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' });
+  return new Date(d).toLocaleString('es-BO', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  });
 }
+
 function fmtDateOnly(d) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('es-BO');
@@ -83,39 +51,141 @@ function fmtDateOnly(d) {
 function rolBadge(rol) {
   const map = {
     administrador: 'badge-blue',
-    psicologo:     'badge-green',
+    psicologo: 'badge-green',
     recepcionista: 'badge-yellow'
   };
+
   return `<span class="badge ${map[rol] || 'badge-gray'}">${rol}</span>`;
 }
+
 function estadoBadge(e) {
-  const map = { programada: 'badge-blue', realizada: 'badge-green', cancelada: 'badge-red' };
+  const map = {
+    programada: 'badge-blue',
+    realizada: 'badge-green',
+    cancelada: 'badge-red'
+  };
+
   return `<span class="badge ${map[e] || 'badge-gray'}">${e}</span>`;
 }
+
 function activoBadge(a) {
-  return a ? '<span class="badge badge-green">Activo</span>' : '<span class="badge badge-gray">Inactivo</span>';
+  return a
+    ? '<span class="badge badge-green">Activo</span>'
+    : '<span class="badge badge-gray">Inactivo</span>';
+}
+
+function jsString(value) {
+  return JSON.stringify(String(value || ''));
+}
+
+// ── PERMISOS POR ROL ───────────────────────────
+const permisosPorRol = {
+  administrador: [
+    'dashboard',
+    'citas',
+    'calendario',
+    'pacientes',
+    'psicologos',
+    'usuarios'
+  ],
+  recepcionista: [
+    'dashboard',
+    'citas',
+    'calendario',
+    'pacientes'
+  ],
+  psicologo: [
+    'dashboard',
+    'citas',
+    'calendario',
+    'pacientes'
+  ]
+};
+
+function tienePermiso(section) {
+  if (!currentUser) return false;
+  return permisosPorRol[currentUser.rol]?.includes(section) || false;
+}
+
+function esAdmin() {
+  return currentUser && currentUser.rol === 'administrador';
+}
+
+function esRecepcionista() {
+  return currentUser && currentUser.rol === 'recepcionista';
+}
+
+function esPsicologo() {
+  return currentUser && currentUser.rol === 'psicologo';
+}
+
+function puedeGestionarUsuarios() {
+  return esAdmin();
+}
+
+function puedeGestionarPsicologos() {
+  return esAdmin();
+}
+
+function puedeGestionarPacientes() {
+  return esAdmin() || esRecepcionista();
+}
+
+function puedeGestionarCitas() {
+  return esAdmin() || esRecepcionista();
+}
+
+function aplicarPermisosUI() {
+  if (!currentUser) return;
+
+  document.querySelectorAll('[data-nav]').forEach(link => {
+    const section = link.dataset.nav;
+    link.style.display = tienePermiso(section) ? 'flex' : 'none';
+  });
+
+  if ($('btn-nuevo-usuario')) {
+    $('btn-nuevo-usuario').style.display =
+      puedeGestionarUsuarios() ? 'inline-flex' : 'none';
+  }
+
+  if ($('btn-nuevo-psicologo')) {
+    $('btn-nuevo-psicologo').style.display =
+      puedeGestionarPsicologos() ? 'inline-flex' : 'none';
+  }
+
+  if ($('btn-nuevo-paciente')) {
+    $('btn-nuevo-paciente').style.display =
+      puedeGestionarPacientes() ? 'inline-flex' : 'none';
+  }
+
+  if ($('btn-nueva-cita')) {
+    $('btn-nueva-cita').style.display =
+      puedeGestionarCitas() ? 'inline-flex' : 'none';
+  }
 }
 
 // ── AUTH ───────────────────────────────────────
-document.getElementById('login-form').addEventListener('submit', async e => {
+$('login-form').addEventListener('submit', async e => {
   e.preventDefault();
-  const email     = $('login-email').value;
+
+  const email = $('login-email').value;
   const contrasena = $('login-pass').value;
+
   try {
     const data = await api('POST', '/usuarios/auth/login', { email, contrasena });
-currentUser = data.user;
 
-sessionStorage.setItem('sigch_user', JSON.stringify(currentUser));
+    currentUser = data.user;
+    sessionStorage.setItem('sigch_user', JSON.stringify(currentUser));
 
-$('login-screen').style.display = 'none';
-$('sidebar').style.display = 'flex';
-$('main').style.display = 'block';
+    $('login-screen').style.display = 'none';
+    $('sidebar').style.display = 'flex';
+    $('main').style.display = 'block';
 
-$('user-name').textContent = currentUser.nombre_completo;
-$('user-role').textContent = currentUser.rol;
+    $('user-name').textContent = currentUser.nombre_completo;
+    $('user-role').textContent = currentUser.rol;
 
-aplicarPermisosUI();
-navigate('dashboard');
+    aplicarPermisosUI();
+    navigate('dashboard');
   } catch (err) {
     showAlert(err.message, 'error', 'login-alert');
   }
@@ -123,20 +193,44 @@ navigate('dashboard');
 
 $('logout-btn').addEventListener('click', () => {
   currentUser = null;
+  sessionStorage.removeItem('sigch_user');
+
   $('login-screen').style.display = 'flex';
   $('sidebar').style.display = 'none';
   $('main').style.display = 'none';
+
+  $('login-pass').value = '';
 });
 
 // ── NAVIGATION ─────────────────────────────────
 function navigate(section) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
+  if (!currentUser) {
+    $('login-screen').style.display = 'flex';
+    $('sidebar').style.display = 'none';
+    $('main').style.display = 'none';
+    return;
+  }
+
+  if (!tienePermiso(section)) {
+    alert('No tiene permiso para acceder a este módulo.');
+    section = 'dashboard';
+  }
+
+  document.querySelectorAll('.section').forEach(s => {
+    s.classList.remove('active');
+  });
+
+  document.querySelectorAll('#sidebar nav a').forEach(a => {
+    a.classList.remove('active');
+  });
+
   const sec = $('sec-' + section);
   if (sec) sec.classList.add('active');
+
   const link = document.querySelector(`[data-nav="${section}"]`);
   if (link) link.classList.add('active');
-  loaders[section] && loaders[section]();
+
+  if (loaders[section]) loaders[section]();
 }
 
 document.querySelectorAll('[data-nav]').forEach(a => {
@@ -147,8 +241,14 @@ document.querySelectorAll('[data-nav]').forEach(a => {
 });
 
 // ── MODAL HELPERS ──────────────────────────────
-function openModal(id) { $(id).classList.add('open'); }
-function closeModal(id) { $(id).classList.remove('open'); }
+function openModal(id) {
+  $(id).classList.add('open');
+}
+
+function closeModal(id) {
+  $(id).classList.remove('open');
+}
+
 document.querySelectorAll('.modal-close, .modal-cancel').forEach(btn => {
   btn.addEventListener('click', () => {
     const modal = btn.closest('.modal-overlay');
@@ -160,20 +260,28 @@ document.querySelectorAll('.modal-close, .modal-cancel').forEach(btn => {
 async function loadDashboard() {
   try {
     const stats = await api('GET', '/citas/stats/resumen');
-    $('stat-total-citas').textContent   = stats.total_citas;
-    $('stat-programadas').textContent   = stats.programadas;
-    $('stat-realizadas').textContent    = stats.realizadas;
-    $('stat-canceladas').textContent    = stats.canceladas;
-    $('stat-pacientes').textContent     = stats.total_pacientes;
-    $('stat-psicologos').textContent    = stats.total_psicologos;
 
-    // Próximas citas
+    $('stat-total-citas').textContent = stats.total_citas;
+    $('stat-programadas').textContent = stats.programadas;
+    $('stat-realizadas').textContent = stats.realizadas;
+    $('stat-canceladas').textContent = stats.canceladas;
+    $('stat-pacientes').textContent = stats.total_pacientes;
+    $('stat-psicologos').textContent = stats.total_psicologos;
+
     const citas = await api('GET', '/citas?estado=programada');
     const tbody = $('dashboard-citas');
+
     if (!citas.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty"><div class="icon">📅</div>No hay citas programadas</td></tr>';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="empty">
+            <div class="icon">📅</div>
+            No hay citas programadas
+          </td>
+        </tr>`;
       return;
     }
+
     tbody.innerHTML = citas.slice(0, 8).map(c => `
       <tr>
         <td>${fmtDate(c.fecha_hora)}</td>
@@ -181,20 +289,37 @@ async function loadDashboard() {
         <td>${c.psicologo_nombre}</td>
         <td>${c.motivo || '—'}</td>
         <td>${estadoBadge(c.estado)}</td>
-      </tr>`).join('');
-  } catch (err) { console.error(err); }
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 // ── USUARIOS ───────────────────────────────────
 let editingUsuario = null;
+
 async function loadUsuarios() {
+  if (!puedeGestionarUsuarios()) {
+    alert('No tiene permiso para ver usuarios.');
+    return;
+  }
+
   try {
     const rows = await api('GET', '/usuarios');
     const tbody = $('usuarios-tbody');
+
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty"><div class="icon">👤</div>Sin usuarios</td></tr>';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="empty">
+            <div class="icon">👤</div>
+            Sin usuarios
+          </td>
+        </tr>`;
       return;
     }
+
     tbody.innerHTML = rows.map(u => `
       <tr>
         <td>${u.id_usuario}</td>
@@ -204,34 +329,65 @@ async function loadUsuarios() {
         <td>${activoBadge(u.activo)}</td>
         <td>
           <button class="btn btn-edit btn-sm" onclick="editUsuario(${u.id_usuario})">✏ Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteUsuario(${u.id_usuario}, '${u.nombre_completo}')">✕</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteUsuario(${u.id_usuario}, ${jsString(u.nombre_completo)})">✕</button>
         </td>
-      </tr>`).join('');
-  } catch (err) { console.error(err); }
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 window.editUsuario = async id => {
+  if (!puedeGestionarUsuarios()) {
+    alert('No tiene permiso para editar usuarios.');
+    return;
+  }
+
   editingUsuario = id;
+
   try {
     const u = await api('GET', `/usuarios/${id}`);
+
     $('u-nombre').value = u.nombre_completo;
-    $('u-email').value  = u.email;
-    $('u-rol').value    = u.rol;
-    $('u-pass').value   = '';
+    $('u-email').value = u.email;
+    $('u-rol').value = u.rol;
+    $('u-pass').value = '';
+
     $('modal-usuario-title').textContent = 'Editar Usuario';
     openModal('modal-usuario');
-  } catch (err) { alert(err.message); }
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
 window.deleteUsuario = async (id, nombre) => {
+  if (!puedeGestionarUsuarios()) {
+    alert('No tiene permiso para eliminar usuarios.');
+    return;
+  }
+
+  if (currentUser && Number(id) === Number(currentUser.id_usuario)) {
+    alert('No puedes desactivar el usuario con el que iniciaste sesión.');
+    return;
+  }
+
   if (!confirm(`¿Desactivar al usuario "${nombre}"?`)) return;
+
   try {
     await api('DELETE', `/usuarios/${id}`);
     loadUsuarios();
-  } catch (err) { alert(err.message); }
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
 $('btn-nuevo-usuario').addEventListener('click', () => {
+  if (!puedeGestionarUsuarios()) {
+    alert('No tiene permiso para crear usuarios.');
+    return;
+  }
+
   editingUsuario = null;
   $('form-usuario').reset();
   $('modal-usuario-title').textContent = 'Nuevo Usuario';
@@ -240,32 +396,64 @@ $('btn-nuevo-usuario').addEventListener('click', () => {
 
 $('form-usuario').addEventListener('submit', async e => {
   e.preventDefault();
+
+  if (!puedeGestionarUsuarios()) {
+    alert('No tiene permiso para guardar usuarios.');
+    return;
+  }
+
   const body = {
     nombre_completo: $('u-nombre').value,
     email: $('u-email').value,
-    rol:   $('u-rol').value
+    rol: $('u-rol').value
   };
+
   const pass = $('u-pass').value;
+
   if (pass) body.contrasena = pass;
-  if (!editingUsuario && !pass) return showAlert('La contraseña es obligatoria para nuevos usuarios');
+
+  if (!editingUsuario && !pass) {
+    return showAlert('La contraseña es obligatoria para nuevos usuarios');
+  }
+
   try {
-    if (editingUsuario) await api('PUT', `/usuarios/${editingUsuario}`, body);
-    else                 await api('POST', '/usuarios', { ...body, contrasena: pass });
+    if (editingUsuario) {
+      await api('PUT', `/usuarios/${editingUsuario}`, body);
+    } else {
+      await api('POST', '/usuarios', { ...body, contrasena: pass });
+    }
+
     closeModal('modal-usuario');
     loadUsuarios();
-  } catch (err) { showAlert(err.message); }
+  } catch (err) {
+    showAlert(err.message);
+  }
 });
 
 // ── PSICÓLOGOS ─────────────────────────────────
 let editingPsicologo = null;
+
 async function loadPsicologos() {
+  if (!puedeGestionarPsicologos()) {
+    alert('No tiene permiso para gestionar psicólogos.');
+    return;
+  }
+
   try {
     const rows = await api('GET', '/psicologos');
     const tbody = $('psicologos-tbody');
+
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty"><div class="icon">🩺</div>Sin psicólogos</td></tr>';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="empty">
+            <div class="icon">🩺</div>
+            Sin psicólogos
+          </td>
+        </tr>`;
       return;
     }
+
     tbody.innerHTML = rows.map(p => `
       <tr>
         <td>${p.id_psicologo}</td>
@@ -275,39 +463,67 @@ async function loadPsicologos() {
         <td>${activoBadge(p.activo)}</td>
         <td>
           <button class="btn btn-edit btn-sm" onclick="editPsicologo(${p.id_psicologo})">✏ Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="deletePsicologo(${p.id_psicologo}, '${p.nombre_completo}')">✕</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePsicologo(${p.id_psicologo}, ${jsString(p.nombre_completo)})">✕</button>
         </td>
-      </tr>`).join('');
-  } catch (err) { console.error(err); }
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 window.editPsicologo = async id => {
+  if (!puedeGestionarPsicologos()) {
+    alert('No tiene permiso para editar psicólogos.');
+    return;
+  }
+
   editingPsicologo = id;
+
   try {
     const p = await api('GET', `/psicologos/${id}`);
-    $('ps-id-usuario').value   = p.id_usuario;
-    $('ps-nombre').value       = p.nombre_completo;
+
+    await populatePsicologoUsers();
+
+    $('ps-id-usuario').value = p.id_usuario;
+    $('ps-nombre').value = p.nombre_completo;
     $('ps-especialidad').value = p.especialidad;
-    $('ps-registro').value     = p.registro_profesional;
+    $('ps-registro').value = p.registro_profesional;
+
     $('modal-psicologo-title').textContent = 'Editar Psicólogo';
     openModal('modal-psicologo');
-  } catch (err) { alert(err.message); }
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
 window.deletePsicologo = async (id, nombre) => {
+  if (!puedeGestionarPsicologos()) {
+    alert('No tiene permiso para eliminar psicólogos.');
+    return;
+  }
+
   if (!confirm(`¿Desactivar al psicólogo "${nombre}"?`)) return;
+
   try {
     await api('DELETE', `/psicologos/${id}`);
     loadPsicologos();
-  } catch (err) { alert(err.message); }
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
-$('btn-nuevo-psicologo').addEventListener('click', () => {
+$('btn-nuevo-psicologo').addEventListener('click', async () => {
+  if (!puedeGestionarPsicologos()) {
+    alert('No tiene permiso para crear psicólogos.');
+    return;
+  }
+
   editingPsicologo = null;
   $('form-psicologo').reset();
   $('modal-psicologo-title').textContent = 'Nuevo Psicólogo';
-  // Populate users select
-  populatePsicologoUsers();
+
+  await populatePsicologoUsers();
   openModal('modal-psicologo');
 });
 
@@ -315,128 +531,220 @@ async function populatePsicologoUsers() {
   try {
     const usuarios = await api('GET', '/usuarios');
     const sel = $('ps-id-usuario');
+
     sel.innerHTML = '<option value="">— Seleccionar usuario —</option>' +
-      usuarios.filter(u => u.rol === 'psicologo' && u.activo)
-        .map(u => `<option value="${u.id_usuario}">${u.nombre_completo}</option>`).join('');
-  } catch (err) {}
+      usuarios
+        .filter(u => u.rol === 'psicologo' && u.activo)
+        .map(u => `<option value="${u.id_usuario}">${u.nombre_completo}</option>`)
+        .join('');
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 $('form-psicologo').addEventListener('submit', async e => {
   e.preventDefault();
+
+  if (!puedeGestionarPsicologos()) {
+    alert('No tiene permiso para guardar psicólogos.');
+    return;
+  }
+
   const body = {
-    id_usuario:           parseInt($('ps-id-usuario').value),
-    nombre_completo:      $('ps-nombre').value,
-    especialidad:         $('ps-especialidad').value,
+    id_usuario: parseInt($('ps-id-usuario').value),
+    nombre_completo: $('ps-nombre').value,
+    especialidad: $('ps-especialidad').value,
     registro_profesional: $('ps-registro').value
   };
+
   try {
-    if (editingPsicologo) await api('PUT', `/psicologos/${editingPsicologo}`, body);
-    else                   await api('POST', '/psicologos', body);
+    if (editingPsicologo) {
+      await api('PUT', `/psicologos/${editingPsicologo}`, body);
+    } else {
+      await api('POST', '/psicologos', body);
+    }
+
     closeModal('modal-psicologo');
     loadPsicologos();
-  } catch (err) { showAlert(err.message, 'error', 'modal-alert-ps'); }
+  } catch (err) {
+    showAlert(err.message, 'error', 'modal-alert-ps');
+  }
 });
 
 // ── PACIENTES ──────────────────────────────────
 let editingPaciente = null;
+
 async function loadPacientes(q = '') {
   try {
     const rows = await api('GET', `/pacientes${q ? '?q=' + encodeURIComponent(q) : ''}`);
     const tbody = $('pacientes-tbody');
+
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty"><div class="icon">🧑‍⚕️</div>No se encontraron pacientes</td></tr>';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="empty">
+            <div class="icon">🧑‍⚕️</div>
+            No se encontraron pacientes
+          </td>
+        </tr>`;
       return;
     }
-    tbody.innerHTML = rows.map(p => `
-      <tr>
-        <td>${p.id_paciente}</td>
-        <td>${p.nombre_completo}</td>
-        <td>${p.ci}</td>
-        <td>${fmtDateOnly(p.fecha_nacimiento)}</td>
-        <td>${p.telefono}</td>
-        <td>${activoBadge(p.activo)}</td>
-        <td>
+
+    tbody.innerHTML = rows.map(p => {
+      const acciones = puedeGestionarPacientes()
+        ? `
           <button class="btn btn-edit btn-sm" onclick="editPaciente(${p.id_paciente})">✏ Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="deletePaciente(${p.id_paciente}, '${p.nombre_completo}')">✕</button>
-        </td>
-      </tr>`).join('');
-  } catch (err) { console.error(err); }
+          <button class="btn btn-danger btn-sm" onclick="deletePaciente(${p.id_paciente}, ${jsString(p.nombre_completo)})">✕</button>
+        `
+        : '<span class="badge badge-gray">Solo lectura</span>';
+
+      return `
+        <tr>
+          <td>${p.id_paciente}</td>
+          <td>${p.nombre_completo}</td>
+          <td>${p.ci}</td>
+          <td>${fmtDateOnly(p.fecha_nacimiento)}</td>
+          <td>${p.telefono}</td>
+          <td>${activoBadge(p.activo)}</td>
+          <td>${acciones}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 window.editPaciente = async id => {
+  if (!puedeGestionarPacientes()) {
+    alert('No tiene permiso para editar pacientes.');
+    return;
+  }
+
   editingPaciente = id;
+
   try {
     const p = await api('GET', `/pacientes/${id}`);
-    $('p-nombre').value    = p.nombre_completo;
-    $('p-ci').value        = p.ci;
-    $('p-fnac').value      = p.fecha_nacimiento?.split('T')[0] || '';
-    $('p-tel').value       = p.telefono;
-    $('p-email').value     = p.email || '';
+
+    $('p-nombre').value = p.nombre_completo;
+    $('p-ci').value = p.ci;
+    $('p-fnac').value = p.fecha_nacimiento?.split('T')[0] || '';
+    $('p-tel').value = p.telefono;
+    $('p-email').value = p.email || '';
     $('p-direccion').value = p.direccion || '';
+
     $('modal-paciente-title').textContent = 'Editar Paciente';
     openModal('modal-paciente');
-  } catch (err) { alert(err.message); }
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
 window.deletePaciente = async (id, nombre) => {
+  if (!puedeGestionarPacientes()) {
+    alert('No tiene permiso para eliminar pacientes.');
+    return;
+  }
+
   if (!confirm(`¿Desactivar al paciente "${nombre}"?`)) return;
+
   try {
     await api('DELETE', `/pacientes/${id}`);
     loadPacientes();
-  } catch (err) { alert(err.message); }
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
 $('btn-nuevo-paciente').addEventListener('click', () => {
+  if (!puedeGestionarPacientes()) {
+    alert('No tiene permiso para registrar pacientes.');
+    return;
+  }
+
   editingPaciente = null;
   $('form-paciente').reset();
   $('modal-paciente-title').textContent = 'Nuevo Paciente';
   openModal('modal-paciente');
 });
 
-$('search-paciente').addEventListener('input', e => loadPacientes(e.target.value));
+$('search-paciente').addEventListener('input', e => {
+  loadPacientes(e.target.value);
+});
 
 $('form-paciente').addEventListener('submit', async e => {
   e.preventDefault();
+
+  if (!puedeGestionarPacientes()) {
+    alert('No tiene permiso para guardar pacientes.');
+    return;
+  }
+
   const body = {
-    nombre_completo:  $('p-nombre').value,
-    ci:               $('p-ci').value,
+    nombre_completo: $('p-nombre').value,
+    ci: $('p-ci').value,
     fecha_nacimiento: $('p-fnac').value,
-    telefono:         $('p-tel').value,
-    email:            $('p-email').value || null,
-    direccion:        $('p-direccion').value || null
+    telefono: $('p-tel').value,
+    email: $('p-email').value || null,
+    direccion: $('p-direccion').value || null
   };
+
   try {
-    if (editingPaciente) await api('PUT', `/pacientes/${editingPaciente}`, body);
-    else                  await api('POST', '/pacientes', body);
+    if (editingPaciente) {
+      await api('PUT', `/pacientes/${editingPaciente}`, body);
+    } else {
+      await api('POST', '/pacientes', body);
+    }
+
     closeModal('modal-paciente');
     loadPacientes();
-  } catch (err) { showAlert(err.message, 'error', 'modal-alert-pac'); }
+  } catch (err) {
+    showAlert(err.message, 'error', 'modal-alert-pac');
+  }
 });
 
 // ── CITAS ──────────────────────────────────────
 let editingCita = null;
+
 async function loadCitas() {
   try {
     const rows = await api('GET', '/citas');
     const tbody = $('citas-tbody');
+
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty"><div class="icon">📅</div>Sin citas registradas</td></tr>';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="empty">
+            <div class="icon">📅</div>
+            Sin citas registradas
+          </td>
+        </tr>`;
       return;
     }
-    tbody.innerHTML = rows.map(c => `
-      <tr>
-        <td>${c.id_cita}</td>
-        <td>${fmtDate(c.fecha_hora)}</td>
-        <td>${c.paciente_nombre}</td>
-        <td>${c.psicologo_nombre}</td>
-        <td>${c.motivo || '—'}</td>
-        <td>${estadoBadge(c.estado)}</td>
-        <td>
+
+    tbody.innerHTML = rows.map(c => {
+      const acciones = puedeGestionarCitas()
+        ? `
           <button class="btn btn-edit btn-sm" onclick="editCita(${c.id_cita})">✏ Editar</button>
           <button class="btn btn-danger btn-sm" onclick="deleteCita(${c.id_cita})">✕ Cancelar</button>
-        </td>
-      </tr>`).join('');
-  } catch (err) { console.error(err); }
+        `
+        : '<span class="badge badge-gray">Solo lectura</span>';
+
+      return `
+        <tr>
+          <td>${c.id_cita}</td>
+          <td>${fmtDate(c.fecha_hora)}</td>
+          <td>${c.paciente_nombre}</td>
+          <td>${c.psicologo_nombre}</td>
+          <td>${c.motivo || '—'}</td>
+          <td>${estadoBadge(c.estado)}</td>
+          <td>${acciones}</td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 async function populateCitaSelects() {
@@ -445,123 +753,233 @@ async function populateCitaSelects() {
       api('GET', '/pacientes'),
       api('GET', '/psicologos')
     ]);
+
     $('c-paciente').innerHTML = '<option value="">— Seleccionar —</option>' +
-      pacientes.filter(p => p.activo).map(p => `<option value="${p.id_paciente}">${p.nombre_completo} (${p.ci})</option>`).join('');
+      pacientes
+        .filter(p => p.activo)
+        .map(p => `<option value="${p.id_paciente}">${p.nombre_completo} (${p.ci})</option>`)
+        .join('');
+
     $('c-psicologo').innerHTML = '<option value="">— Seleccionar —</option>' +
-      psicologos.filter(p => p.activo).map(p => `<option value="${p.id_psicologo}">${p.nombre_completo}</option>`).join('');
-  } catch (err) {}
+      psicologos
+        .filter(p => p.activo)
+        .map(p => `<option value="${p.id_psicologo}">${p.nombre_completo}</option>`)
+        .join('');
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 window.editCita = async id => {
+  if (!puedeGestionarCitas()) {
+    alert('No tiene permiso para editar citas.');
+    return;
+  }
+
   editingCita = id;
   await populateCitaSelects();
+
   try {
     const c = await api('GET', `/citas/${id}`);
-    $('c-paciente').value  = c.id_paciente;
+
+    $('c-paciente').value = c.id_paciente;
     $('c-psicologo').value = c.id_psicologo;
-    $('c-fecha').value     = c.fecha_hora?.slice(0, 16) || '';
-    $('c-motivo').value    = c.motivo || '';
-    $('c-estado').value    = c.estado;
+    $('c-fecha').value = c.fecha_hora?.slice(0, 16) || '';
+    $('c-motivo').value = c.motivo || '';
+    $('c-estado').value = c.estado;
+
     $('modal-cita-title').textContent = 'Editar Cita';
     $('c-estado-group').style.display = 'block';
+
     openModal('modal-cita');
-  } catch (err) { alert(err.message); }
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
 window.deleteCita = async id => {
+  if (!puedeGestionarCitas()) {
+    alert('No tiene permiso para cancelar citas.');
+    return;
+  }
+
   if (!confirm('¿Cancelar esta cita?')) return;
+
   try {
     await api('DELETE', `/citas/${id}`);
     loadCitas();
-  } catch (err) { alert(err.message); }
+    loadDashboard();
+    loadCalendar();
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
 $('btn-nueva-cita').addEventListener('click', async () => {
+  if (!puedeGestionarCitas()) {
+    alert('No tiene permiso para crear citas.');
+    return;
+  }
+
   editingCita = null;
   $('form-cita').reset();
   $('modal-cita-title').textContent = 'Nueva Cita';
   $('c-estado-group').style.display = 'none';
+
   await populateCitaSelects();
   openModal('modal-cita');
 });
 
 $('form-cita').addEventListener('submit', async e => {
   e.preventDefault();
+
+  if (!puedeGestionarCitas()) {
+    alert('No tiene permiso para guardar citas.');
+    return;
+  }
+
   const body = {
-    id_paciente:  parseInt($('c-paciente').value),
+    id_paciente: parseInt($('c-paciente').value),
     id_psicologo: parseInt($('c-psicologo').value),
-    fecha_hora:   $('c-fecha').value.replace('T', ' '),
-    motivo:       $('c-motivo').value || null
+    fecha_hora: $('c-fecha').value.replace('T', ' '),
+    motivo: $('c-motivo').value || null
   };
+
   if (editingCita) body.estado = $('c-estado').value;
+
   try {
-    if (editingCita) await api('PUT', `/citas/${editingCita}`, body);
-    else              await api('POST', '/citas', body);
+    if (editingCita) {
+      await api('PUT', `/citas/${editingCita}`, body);
+    } else {
+      await api('POST', '/citas', body);
+    }
+
     closeModal('modal-cita');
     loadCitas();
-  } catch (err) { showAlert(err.message, 'error', 'modal-alert-cita'); }
+    loadDashboard();
+    loadCalendar();
+  } catch (err) {
+    showAlert(err.message, 'error', 'modal-alert-cita');
+  }
 });
 
 // ── CALENDAR ───────────────────────────────────
 let calDate = new Date();
+
 async function loadCalendar() {
-  const year  = calDate.getFullYear();
+  const year = calDate.getFullYear();
   const month = calDate.getMonth();
-  const names = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  const names = [
+    'Ene',
+    'Feb',
+    'Mar',
+    'Abr',
+    'May',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dic'
+  ];
+
   $('cal-title').textContent = `${names[month]} ${year}`;
 
   try {
     const citas = await api('GET', '/citas?estado=programada');
     const citaMap = {};
+
     citas.forEach(c => {
       const key = c.fecha_hora?.slice(0, 10);
       if (key) citaMap[key] = (citaMap[key] || 0) + 1;
     });
 
     const grid = $('cal-grid');
-    // Clear day cells (keep headers)
+
     const headers = Array.from(grid.querySelectorAll('.cal-header'));
+
     grid.innerHTML = '';
+
     headers.forEach(h => grid.appendChild(h));
 
-    const first  = new Date(year, month, 1).getDay();
+    const first = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date().toISOString().slice(0, 10);
 
-    // Blank cells
     for (let i = 0; i < first; i++) {
       const div = document.createElement('div');
       div.className = 'cal-day other-month';
       grid.appendChild(div);
     }
+
     for (let d = 1; d <= daysInMonth; d++) {
-      const key = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
       const div = document.createElement('div');
       div.className = 'cal-day' + (key === today ? ' today' : '');
-      div.innerHTML = `<span>${d}</span>` +
-        (citaMap[key] ? `<div class="dot-row">${'<div class="dot"></div>'.repeat(Math.min(citaMap[key],4))}</div>` : '');
+
+      div.innerHTML = `
+        <span>${d}</span>
+        ${
+          citaMap[key]
+            ? `<div class="dot-row">${'<div class="dot"></div>'.repeat(Math.min(citaMap[key], 4))}</div>`
+            : ''
+        }
+      `;
+
       div.title = citaMap[key] ? `${citaMap[key]} cita(s)` : '';
+
       grid.appendChild(div);
     }
-  } catch (err) { console.error(err); }
+  } catch (err) {
+    console.error(err);
+  }
 }
 
-$('cal-prev').addEventListener('click', () => { calDate.setMonth(calDate.getMonth() - 1); loadCalendar(); });
-$('cal-next').addEventListener('click', () => { calDate.setMonth(calDate.getMonth() + 1); loadCalendar(); });
+$('cal-prev').addEventListener('click', () => {
+  calDate.setMonth(calDate.getMonth() - 1);
+  loadCalendar();
+});
+
+$('cal-next').addEventListener('click', () => {
+  calDate.setMonth(calDate.getMonth() + 1);
+  loadCalendar();
+});
 
 // ── LOADERS MAP ────────────────────────────────
 const loaders = {
-  dashboard:  loadDashboard,
-  usuarios:   loadUsuarios,
+  dashboard: loadDashboard,
+  usuarios: loadUsuarios,
   psicologos: loadPsicologos,
-  pacientes:  loadPacientes,
-  citas:      loadCitas,
+  pacientes: loadPacientes,
+  citas: loadCitas,
   calendario: loadCalendar
 };
 
-// Close modals on overlay click
+// ── CLOSE MODALS ON OVERLAY CLICK ──────────────
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => {
     if (e.target === overlay) overlay.classList.remove('open');
   });
+});
+
+// ── RESTAURAR SESIÓN AL RECARGAR ───────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = sessionStorage.getItem('sigch_user');
+
+  if (saved) {
+    currentUser = JSON.parse(saved);
+
+    $('login-screen').style.display = 'none';
+    $('sidebar').style.display = 'flex';
+    $('main').style.display = 'block';
+
+    $('user-name').textContent = currentUser.nombre_completo;
+    $('user-role').textContent = currentUser.rol;
+
+    aplicarPermisosUI();
+    navigate('dashboard');
+  }
 });
