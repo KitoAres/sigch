@@ -96,12 +96,11 @@ router.post('/', requireAdmin, async (req, res) => {
     });
   }
 
-  if (contrasena.length < 6) {
-    return res.status(400).json({
-      error: 'La contraseña debe tener al menos 6 caracteres'
-    });
-  }
-
+if (contrasena.length < 3) {
+  return res.status(400).json({
+    error: 'La contraseña debe tener al menos 3 caracteres'
+  });
+}
   try {
     const contrasena_hash = await bcrypt.hash(contrasena, 10);
 
@@ -165,11 +164,11 @@ router.put('/:id', requireAdmin, async (req, res) => {
     }
 
     if (contrasena) {
-      if (contrasena.length < 6) {
-        return res.status(400).json({
-          error: 'La contraseña debe tener al menos 6 caracteres'
-        });
-      }
+if (contrasena.length < 3) {
+  return res.status(400).json({
+    error: 'La contraseña debe tener al menos 3 caracteres'
+  });
+}
 
       const hash = await bcrypt.hash(contrasena, 10);
       fields.push('contrasena_hash = ?');
