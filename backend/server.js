@@ -18,6 +18,7 @@ app.use('/api/usuarios',   require('./routes/usuarios'));
 app.use('/api/psicologos', require('./routes/psicologos'));
 app.use('/api/pacientes',  require('./routes/pacientes'));
 app.use('/api/citas',      require('./routes/citas'));
+app.use('/api/historial',  require('./routes/historial'));
 
 // Ruta raíz → index.html
 app.get('/', (req, res) => {
