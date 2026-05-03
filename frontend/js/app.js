@@ -542,12 +542,28 @@ $('btn-nuevo-psicologo').addEventListener('click', async () => {
 
 async function populatePsicologoUsers() {
   try {
-    const usuarios = await api('GET', '/usuarios');
+    const [usuarios, psicologos] = await Promise.all([
+      api('GET', '/usuarios'),
+      api('GET', '/psicologos')
+    ]);
+
+    const usuariosYaAsignados = psicologos
+      .filter(p => p.activo)
+      .map(p => Number(p.id_usuario));
+
     const sel = $('ps-id-usuario');
 
     sel.innerHTML = '<option value="">— Seleccionar usuario —</option>' +
       usuarios
-        .filter(u => u.rol === 'psicologo' && u.activo)
+        .filter(u => {
+          if (u.rol !== 'psicologo' || !u.activo) return false;
+
+          // Si estamos editando, dejamos que aparezca su usuario actual.
+          if (editingPsicologo) return true;
+
+          // Si es nuevo, no mostrar usuarios que ya tienen perfil de psicólogo.
+          return !usuariosYaAsignados.includes(Number(u.id_usuario));
+        })
         .map(u => `<option value="${u.id_usuario}">${u.nombre_completo}</option>`)
         .join('');
   } catch (err) {
