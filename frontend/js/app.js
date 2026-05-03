@@ -1167,6 +1167,8 @@ $('cal-next').addEventListener('click', () => {
   loadCalendar();
 });
 // ── HORARIOS ───────────────────────────────────
+let editingHorario = null;
+
 async function loadHorarios() {
   if (!tienePermiso('horarios')) {
     alert('No tiene permiso para ver horarios.');
@@ -1180,7 +1182,7 @@ async function loadHorarios() {
     if (!rows.length) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="6" class="empty">
+          <td colspan="7" class="empty">
             <div class="icon">⏰</div>
             No hay horarios registrados
           </td>
@@ -1196,6 +1198,10 @@ async function loadHorarios() {
         <td>${h.hora_inicio}</td>
         <td>${h.hora_fin}</td>
         <td>${activoBadge(h.activo)}</td>
+        <td>
+          <button class="btn btn-edit btn-sm" onclick="editHorario(${h.id_horario})">✏ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteHorario(${h.id_horario})">✕</button>
+        </td>
       </tr>
     `).join('');
   } catch (err) {
@@ -1203,7 +1209,111 @@ async function loadHorarios() {
     console.error(err);
   }
 }
+async function populateHorarioPsicologos() {
+  try {
+    const psicologos = await api('GET', '/psicologos');
+    const sel = $('ho-psicologo');
 
+    sel.innerHTML = '<option value="">— Seleccionar psicólogo —</option>' +
+      psicologos
+        .filter(p => p.activo)
+        .map(p => `<option value="${p.id_psicologo}">${p.nombre_completo}</option>`)
+        .join('');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+window.editHorario = async id => {
+  if (!tienePermiso('horarios')) {
+    alert('No tiene permiso para editar horarios.');
+    return;
+  }
+
+  editingHorario = id;
+  await populateHorarioPsicologos();
+
+  try {
+    const h = await api('GET', `/horarios/${id}`);
+
+    $('ho-psicologo').value = h.id_psicologo;
+    $('ho-dia').value = h.dia_semana;
+    $('ho-inicio').value = String(h.hora_inicio).slice(0, 5);
+    $('ho-fin').value = String(h.hora_fin).slice(0, 5);
+
+    $('modal-horario-title').textContent = 'Editar Horario';
+    openModal('modal-horario');
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
+window.deleteHorario = async id => {
+  if (!tienePermiso('horarios')) {
+    alert('No tiene permiso para eliminar horarios.');
+    return;
+  }
+
+  if (!confirm('¿Desactivar este horario?')) return;
+
+  try {
+    const respuesta = await api('DELETE', `/horarios/${id}`);
+    alert(respuesta.message || 'Horario desactivado correctamente.');
+    await registrarAuditoria('Horarios', 'Eliminar', 'Se desactivó un horario de atención.');
+    loadHorarios();
+  } catch (err) {
+    alert('Error al desactivar horario: ' + err.message);
+  }
+};
+
+if ($('btn-nuevo-horario')) {
+  $('btn-nuevo-horario').addEventListener('click', async () => {
+    if (!tienePermiso('horarios')) {
+      alert('No tiene permiso para crear horarios.');
+      return;
+    }
+
+    editingHorario = null;
+    $('form-horario').reset();
+    $('modal-horario-title').textContent = 'Nuevo Horario';
+
+    await populateHorarioPsicologos();
+    openModal('modal-horario');
+  });
+}
+
+if ($('form-horario')) {
+  $('form-horario').addEventListener('submit', async e => {
+    e.preventDefault();
+
+    if (!tienePermiso('horarios')) {
+      alert('No tiene permiso para guardar horarios.');
+      return;
+    }
+
+    const body = {
+      id_psicologo: parseInt($('ho-psicologo').value),
+      dia_semana: $('ho-dia').value,
+      hora_inicio: $('ho-inicio').value,
+      hora_fin: $('ho-fin').value
+    };
+
+    try {
+      if (editingHorario) {
+        await api('PUT', `/horarios/${editingHorario}`, body);
+        await registrarAuditoria('Horarios', 'Editar', 'Se editó un horario de atención.');
+      } else {
+        await api('POST', '/horarios', body);
+        await registrarAuditoria('Horarios', 'Crear', 'Se registró un nuevo horario de atención.');
+      }
+
+      closeModal('modal-horario');
+      loadHorarios();
+    } catch (err) {
+      showAlert(err.message, 'error', 'modal-alert-horario');
+    }
+  });
+}
 // ── SESIONES CLÍNICAS ──────────────────────────
 async function loadSesiones() {
   if (!tienePermiso('sesiones')) {
@@ -1597,5 +1707,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     aplicarPermisosUI();
     navigate('dashboard');
+      if ($('btn-nuevo-horario')) {
+    $('btn-nuevo-horario').style.display =
+      tienePermiso('horarios') ? 'inline-flex' : 'none';
+  }
   }
 });
