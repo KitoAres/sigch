@@ -103,13 +103,19 @@ document.getElementById('login-form').addEventListener('submit', async e => {
   const contrasena = $('login-pass').value;
   try {
     const data = await api('POST', '/usuarios/auth/login', { email, contrasena });
-    currentUser = data.user;
-    $('login-screen').style.display = 'none';
-    $('sidebar').style.display = 'flex';
-    $('main').style.display = 'block';
-    $('user-name').textContent = currentUser.nombre_completo;
-    $('user-role').textContent = currentUser.rol;
-    navigate('dashboard');
+currentUser = data.user;
+
+sessionStorage.setItem('sigch_user', JSON.stringify(currentUser));
+
+$('login-screen').style.display = 'none';
+$('sidebar').style.display = 'flex';
+$('main').style.display = 'block';
+
+$('user-name').textContent = currentUser.nombre_completo;
+$('user-role').textContent = currentUser.rol;
+
+aplicarPermisosUI();
+navigate('dashboard');
   } catch (err) {
     showAlert(err.message, 'error', 'login-alert');
   }
