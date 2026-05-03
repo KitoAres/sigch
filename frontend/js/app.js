@@ -534,13 +534,14 @@ window.deletePsicologo = async (id, nombre) => {
   if (!confirm(`¿Desactivar al psicólogo "${nombre}"?`)) return;
 
   try {
-    await api('DELETE', `/psicologos/${id}`);
-    alert('Psicólogo desactivado correctamente.');
-    loadPsicologos();
+    const respuesta = await api('DELETE', `/psicologos/${id}`);
+    alert(respuesta.message || 'Psicólogo desactivado correctamente.');
+    await loadPsicologos();
   } catch (err) {
-    alert(err.message);
+    alert('Error al desactivar psicólogo: ' + err.message);
   }
 };
+
 
 $('btn-nuevo-psicologo').addEventListener('click', async () => {
   if (!puedeGestionarPsicologos()) {
