@@ -285,6 +285,7 @@
       <h2>Horarios de Psicólogos</h2>
       <p>Disponibilidad semanal de atención profesional</p>
     </div>
+    <button id="btn-nuevo-horario" class="btn btn-primary">+ Nuevo Horario</button>
   </div>
 
   <div class="table-wrap">
@@ -297,6 +298,7 @@
           <th>Hora Inicio</th>
           <th>Hora Fin</th>
           <th>Estado</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody id="horarios-tbody"></tbody>
@@ -702,6 +704,57 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-edit modal-cancel">Cancelar</button>
         <button type="submit" class="btn btn-primary">Guardar Recordatorio</button>
+      </div>
+    </form>
+  </div>
+</div>
+  <!-- Modal: Horario -->
+<div id="modal-horario" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-horario-title">Nuevo Horario</h3>
+      <button class="modal-close">✕</button>
+    </div>
+
+    <div id="modal-alert-horario" class="alert"></div>
+
+    <form id="form-horario">
+      <div class="form-group">
+        <label>Psicólogo *</label>
+        <select id="ho-psicologo" required>
+          <option value="">— Seleccionar psicólogo —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Día de atención *</label>
+        <select id="ho-dia" required>
+          <option value="">— Seleccionar día —</option>
+          <option value="lunes">Lunes</option>
+          <option value="martes">Martes</option>
+          <option value="miercoles">Miércoles</option>
+          <option value="jueves">Jueves</option>
+          <option value="viernes">Viernes</option>
+          <option value="sabado">Sábado</option>
+          <option value="domingo">Domingo</option>
+        </select>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Hora inicio *</label>
+          <input id="ho-inicio" type="time" required>
+        </div>
+
+        <div class="form-group">
+          <label>Hora fin *</label>
+          <input id="ho-fin" type="time" required>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-edit modal-cancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Horario</button>
       </div>
     </form>
   </div>
