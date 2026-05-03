@@ -710,6 +710,7 @@ window.deletePaciente = async id => {
 
   try {
     const respuesta = await api('DELETE', `/pacientes/${id}`);
+    await registrarAuditoria('Pacientes', 'Eliminar', 'Se desactivó un paciente.');
     alert(respuesta.message || 'Paciente desactivado correctamente.');
     await loadPacientes();
   } catch (err) {
@@ -751,11 +752,13 @@ $('form-paciente').addEventListener('submit', async e => {
   };
 
   try {
-    if (editingPaciente) {
-      await api('PUT', `/pacientes/${editingPaciente}`, body);
-    } else {
-      await api('POST', '/pacientes', body);
-    }
+if (editingPaciente) {
+  await api('PUT', `/pacientes/${editingPaciente}`, body);
+  await registrarAuditoria('Pacientes', 'Editar', 'Se editó la información de un paciente.');
+} else {
+  await api('POST', '/pacientes', body);
+  await registrarAuditoria('Pacientes', 'Crear', 'Se registró un nuevo paciente.');
+}
 
     closeModal('modal-paciente');
     loadPacientes();
