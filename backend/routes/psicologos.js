@@ -14,7 +14,7 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// GET /api/psicologos — listar activos
+// GET /api/psicologos — listar solo activos
 router.get('/', async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -120,7 +120,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
   }
 
   try {
-    await pool.query(`
+    const [result] = await pool.query(`
       UPDATE psicologos
       SET 
         id_usuario = ?,
@@ -137,6 +137,10 @@ router.put('/:id', requireAdmin, async (req, res) => {
       activo === undefined ? 1 : activo,
       req.params.id
     ]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Psicólogo no encontrado.' });
+    }
 
     res.json({ message: 'Psicólogo actualizado correctamente.' });
   } catch (err) {
