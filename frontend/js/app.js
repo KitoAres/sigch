@@ -1389,6 +1389,139 @@ async function loadAuditoria() {
     console.error(err);
   }
 }
+// ── CREAR SESIONES CLÍNICAS ────────────────────
+async function populateSesionCitas() {
+  try {
+    const citas = await api('GET', '/citas');
+    const sel = $('s-cita');
+
+    sel.innerHTML = '<option value="">— Seleccionar cita —</option>' +
+      citas
+        .filter(c => c.activo && c.estado !== 'cancelada')
+        .map(c => `
+          <option 
+            value="${c.id_cita}"
+            data-paciente="${c.id_paciente}"
+            data-psicologo="${c.id_psicologo}">
+            ${fmtDate(c.fecha_hora)} — ${c.paciente_nombre} / ${c.psicologo_nombre}
+          </option>
+        `)
+        .join('');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+if ($('btn-nueva-sesion')) {
+  $('btn-nueva-sesion').addEventListener('click', async () => {
+    if (!tienePermiso('sesiones')) {
+      alert('No tiene permiso para crear sesiones.');
+      return;
+    }
+
+    $('form-sesion').reset();
+    $('s-fecha').value = new Date().toISOString().slice(0, 10);
+    await populateSesionCitas();
+    openModal('modal-sesion');
+  });
+}
+
+if ($('form-sesion')) {
+  $('form-sesion').addEventListener('submit', async e => {
+    e.preventDefault();
+
+    if (!tienePermiso('sesiones')) {
+      alert('No tiene permiso para guardar sesiones.');
+      return;
+    }
+
+    const option = $('s-cita').selectedOptions[0];
+
+    const body = {
+      id_cita: parseInt($('s-cita').value),
+      id_paciente: parseInt(option.dataset.paciente),
+      id_psicologo: parseInt(option.dataset.psicologo),
+      numero_sesion: parseInt($('s-numero').value),
+      fecha: $('s-fecha').value,
+      resumen: $('s-resumen').value,
+      tecnicas_aplicadas: $('s-tecnicas').value || null,
+      tareas_asignadas: $('s-tareas').value || null,
+      evolucion: $('s-evolucion').value || null
+    };
+
+    try {
+      await api('POST', '/sesiones', body);
+      closeModal('modal-sesion');
+      loadSesiones();
+    } catch (err) {
+      showAlert(err.message, 'error', 'modal-alert-sesion');
+    }
+  });
+}
+
+// ── CREAR RECORDATORIOS ────────────────────────
+async function populateRecordatorioCitas() {
+  try {
+    const citas = await api('GET', '/citas');
+    const sel = $('r-cita');
+
+    sel.innerHTML = '<option value="">— Seleccionar cita —</option>' +
+      citas
+        .filter(c => c.activo && c.estado === 'programada')
+        .map(c => `
+          <option value="${c.id_cita}">
+            ${fmtDate(c.fecha_hora)} — ${c.paciente_nombre} / ${c.psicologo_nombre}
+          </option>
+        `)
+        .join('');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+if ($('btn-nuevo-recordatorio')) {
+  $('btn-nuevo-recordatorio').addEventListener('click', async () => {
+    if (!tienePermiso('recordatorios')) {
+      alert('No tiene permiso para crear recordatorios.');
+      return;
+    }
+
+    $('form-recordatorio').reset();
+
+    const fecha = new Date();
+    fecha.setHours(fecha.getHours() + 1);
+    $('r-fecha').value = fecha.toISOString().slice(0, 16);
+
+    await populateRecordatorioCitas();
+    openModal('modal-recordatorio');
+  });
+}
+
+if ($('form-recordatorio')) {
+  $('form-recordatorio').addEventListener('submit', async e => {
+    e.preventDefault();
+
+    if (!tienePermiso('recordatorios')) {
+      alert('No tiene permiso para guardar recordatorios.');
+      return;
+    }
+
+    const body = {
+      id_cita: parseInt($('r-cita').value),
+      tipo: $('r-tipo').value,
+      mensaje: $('r-mensaje').value,
+      fecha_programada: $('r-fecha').value.replace('T', ' ')
+    };
+
+    try {
+      await api('POST', '/recordatorios', body);
+      closeModal('modal-recordatorio');
+      loadRecordatorios();
+    } catch (err) {
+      showAlert(err.message, 'error', 'modal-alert-recordatorio');
+    }
+  });
+}
 
 // ── LOADERS MAP ────────────────────────────────
 const loaders = {
