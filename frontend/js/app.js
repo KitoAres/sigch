@@ -86,6 +86,11 @@ const permisosPorRol = {
     'calendario',
     'pacientes',
     'historial',
+    'sesiones',
+    'horarios',
+    'recordatorios',
+    'reportes',
+    'auditoria',
     'psicologos',
     'usuarios'
   ],
@@ -93,14 +98,16 @@ const permisosPorRol = {
     'dashboard',
     'citas',
     'calendario',
-    'pacientes'
+    'pacientes',
+    'recordatorios'
   ],
   psicologo: [
     'dashboard',
     'citas',
     'calendario',
     'pacientes',
-    'historial'
+    'historial',
+    'sesiones'
   ]
 };
 
@@ -1108,6 +1115,264 @@ $('cal-next').addEventListener('click', () => {
   calDate.setMonth(calDate.getMonth() + 1);
   loadCalendar();
 });
+// ── HORARIOS ───────────────────────────────────
+async function loadHorarios() {
+  if (!tienePermiso('horarios')) {
+    alert('No tiene permiso para ver horarios.');
+    return;
+  }
+
+  try {
+    const rows = await api('GET', '/horarios');
+    const tbody = $('horarios-tbody');
+
+    if (!rows.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="empty">
+            <div class="icon">⏰</div>
+            No hay horarios registrados
+          </td>
+        </tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map(h => `
+      <tr>
+        <td>${h.id_horario}</td>
+        <td>${h.psicologo_nombre}</td>
+        <td>${h.dia_semana}</td>
+        <td>${h.hora_inicio}</td>
+        <td>${h.hora_fin}</td>
+        <td>${activoBadge(h.activo)}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    alert(err.message);
+    console.error(err);
+  }
+}
+
+// ── SESIONES CLÍNICAS ──────────────────────────
+async function loadSesiones() {
+  if (!tienePermiso('sesiones')) {
+    alert('No tiene permiso para ver sesiones clínicas.');
+    return;
+  }
+
+  try {
+    const rows = await api('GET', '/sesiones');
+    const tbody = $('sesiones-tbody');
+
+    if (!rows.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="empty">
+            <div class="icon">🧠</div>
+            No hay sesiones clínicas registradas
+          </td>
+        </tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map(s => `
+      <tr>
+        <td>${s.id_sesion}</td>
+        <td>${fmtDateOnly(s.fecha)}</td>
+        <td>${s.paciente_nombre}</td>
+        <td>${s.psicologo_nombre}</td>
+        <td>${s.numero_sesion}</td>
+        <td>${s.resumen || '—'}</td>
+        <td>${activoBadge(s.activo)}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    alert(err.message);
+    console.error(err);
+  }
+}
+
+// ── RECORDATORIOS ──────────────────────────────
+async function loadRecordatorios() {
+  if (!tienePermiso('recordatorios')) {
+    alert('No tiene permiso para ver recordatorios.');
+    return;
+  }
+
+  try {
+    const rows = await api('GET', '/recordatorios');
+    const tbody = $('recordatorios-tbody');
+
+    if (!rows.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" class="empty">
+            <div class="icon">🔔</div>
+            No hay recordatorios registrados
+          </td>
+        </tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.id_recordatorio}</td>
+        <td>${fmtDate(r.fecha_hora)}</td>
+        <td>${r.paciente_nombre}</td>
+        <td>${r.psicologo_nombre}</td>
+        <td>${r.tipo}</td>
+        <td>${fmtDate(r.fecha_programada)}</td>
+        <td>${r.enviado ? '<span class="badge badge-green">Enviado</span>' : '<span class="badge badge-yellow">Pendiente</span>'}</td>
+        <td>
+          ${
+            r.enviado
+              ? '<span class="badge badge-gray">Sin acciones</span>'
+              : `<button class="btn btn-edit btn-sm" onclick="marcarRecordatorioEnviado(${r.id_recordatorio})">Marcar enviado</button>`
+          }
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    alert(err.message);
+    console.error(err);
+  }
+}
+
+window.marcarRecordatorioEnviado = async id => {
+  if (!tienePermiso('recordatorios')) {
+    alert('No tiene permiso para modificar recordatorios.');
+    return;
+  }
+
+  try {
+    await api('PUT', `/recordatorios/${id}/enviado`);
+    loadRecordatorios();
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
+// ── REPORTES ───────────────────────────────────
+async function loadReportes() {
+  if (!tienePermiso('reportes')) {
+    alert('No tiene permiso para ver reportes.');
+    return;
+  }
+
+  await cargarReporteResumen();
+}
+
+async function cargarReporteResumen() {
+  try {
+    const rows = await api('GET', '/reportes/resumen');
+
+    $('reportes-head').innerHTML = `
+      <tr>
+        <th>Indicador</th>
+        <th>Total</th>
+      </tr>
+    `;
+
+    $('reportes-tbody').innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.indicador}</td>
+        <td>${r.total}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    alert(err.message);
+    console.error(err);
+  }
+}
+
+async function cargarReporteCitas() {
+  try {
+    const rows = await api('GET', '/reportes/citas');
+
+    $('reportes-head').innerHTML = `
+      <tr>
+        <th>#</th>
+        <th>Fecha y Hora</th>
+        <th>Paciente</th>
+        <th>Psicólogo</th>
+        <th>Motivo</th>
+        <th>Estado</th>
+      </tr>
+    `;
+
+    if (!rows.length) {
+      $('reportes-tbody').innerHTML = `
+        <tr>
+          <td colspan="6" class="empty">
+            <div class="icon">📊</div>
+            No hay citas registradas
+          </td>
+        </tr>`;
+      return;
+    }
+
+    $('reportes-tbody').innerHTML = rows.map(c => `
+      <tr>
+        <td>${c.id_cita}</td>
+        <td>${fmtDate(c.fecha_hora)}</td>
+        <td>${c.paciente_nombre}</td>
+        <td>${c.psicologo_nombre}</td>
+        <td>${c.motivo || '—'}</td>
+        <td>${estadoBadge(c.estado)}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    alert(err.message);
+    console.error(err);
+  }
+}
+
+if ($('btn-reporte-resumen')) {
+  $('btn-reporte-resumen').addEventListener('click', cargarReporteResumen);
+}
+
+if ($('btn-reporte-citas')) {
+  $('btn-reporte-citas').addEventListener('click', cargarReporteCitas);
+}
+
+// ── AUDITORÍA ──────────────────────────────────
+async function loadAuditoria() {
+  if (!tienePermiso('auditoria')) {
+    alert('No tiene permiso para ver auditoría.');
+    return;
+  }
+
+  try {
+    const rows = await api('GET', '/auditoria');
+    const tbody = $('auditoria-tbody');
+
+    if (!rows.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="empty">
+            <div class="icon">🛡️</div>
+            No hay registros de auditoría
+          </td>
+        </tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map(a => `
+      <tr>
+        <td>${a.id_auditoria}</td>
+        <td>${a.usuario_nombre || '—'}</td>
+        <td>${a.rol || '—'}</td>
+        <td>${a.modulo}</td>
+        <td>${a.accion}</td>
+        <td>${a.descripcion || '—'}</td>
+        <td>${fmtDate(a.fecha)}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    alert(err.message);
+    console.error(err);
+  }
+}
 
 // ── LOADERS MAP ────────────────────────────────
 const loaders = {
@@ -1117,7 +1382,12 @@ const loaders = {
   pacientes: loadPacientes,
   citas: loadCitas,
   calendario: loadCalendar,
-  historial: loadHistorial
+  historial: loadHistorial,
+  sesiones: loadSesiones,
+  horarios: loadHorarios,
+  recordatorios: loadRecordatorios,
+  reportes: loadReportes,
+  auditoria: loadAuditoria
 };
 
 // ── CLOSE MODALS ON OVERLAY CLICK ──────────────
