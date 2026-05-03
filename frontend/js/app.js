@@ -175,6 +175,21 @@ function aplicarPermisosUI() {
     $('btn-nueva-cita').style.display =
       puedeGestionarCitas() ? 'inline-flex' : 'none';
   }
+
+  if ($('btn-nuevo-historial')) {
+    $('btn-nuevo-historial').style.display =
+      puedeGestionarHistorial() ? 'inline-flex' : 'none';
+  }
+
+  if ($('btn-nueva-sesion')) {
+    $('btn-nueva-sesion').style.display =
+      tienePermiso('sesiones') ? 'inline-flex' : 'none';
+  }
+
+  if ($('btn-nuevo-recordatorio')) {
+    $('btn-nuevo-recordatorio').style.display =
+      tienePermiso('recordatorios') ? 'inline-flex' : 'none';
+  }
 }
 
 // ── AUTH ───────────────────────────────────────
