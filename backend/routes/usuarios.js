@@ -209,12 +209,6 @@ router.delete('/:id', requireAdmin, async (req, res) => {
     const idAEliminar = Number(req.params.id);
     const idUsuarioActual = Number(req.headers['x-user-id']);
 
-    if (idAEliminar === 1) {
-      return res.status(400).json({
-        error: 'No se puede desactivar al administrador principal'
-      });
-    }
-
     if (idAEliminar === idUsuarioActual) {
       return res.status(400).json({
         error: 'No puedes desactivar el usuario con el que iniciaste sesión'
