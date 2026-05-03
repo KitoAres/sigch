@@ -85,6 +85,7 @@ const permisosPorRol = {
     'citas',
     'calendario',
     'pacientes',
+    'historial',
     'psicologos',
     'usuarios'
   ],
@@ -98,7 +99,8 @@ const permisosPorRol = {
     'dashboard',
     'citas',
     'calendario',
-    'pacientes'
+    'pacientes',
+    'historial'
   ]
 };
 
@@ -133,6 +135,10 @@ function puedeGestionarPacientes() {
 
 function puedeGestionarCitas() {
   return esAdmin() || esRecepcionista();
+}
+
+function puedeGestionarHistorial() {
+  return esAdmin() || esPsicologo();
 }
 
 function aplicarPermisosUI() {
@@ -862,6 +868,161 @@ $('form-cita').addEventListener('submit', async e => {
     showAlert(err.message, 'error', 'modal-alert-cita');
   }
 });
+// ── HISTORIAL CLÍNICO ──────────────────────────
+let editingHistorial = null;
+
+async function loadHistorial() {
+  if (!puedeGestionarHistorial()) {
+    alert('No tiene permiso para acceder al historial clínico.');
+    return;
+  }
+
+  try {
+    const rows = await api('GET', '/historial');
+    const tbody = $('historial-tbody');
+
+    if (!rows.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="empty">
+            <div class="icon">📋</div>
+            Sin historiales clínicos registrados
+          </td>
+        </tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map(h => `
+      <tr>
+        <td>${h.id_historial}</td>
+        <td>${fmtDateOnly(h.fecha)}</td>
+        <td>${h.paciente_nombre}</td>
+        <td>${h.psicologo_nombre}</td>
+        <td>${h.diagnostico || '—'}</td>
+        <td>${activoBadge(h.activo)}</td>
+        <td>
+          <button class="btn btn-edit btn-sm" onclick="editHistorial(${h.id_historial})">✏ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteHistorial(${h.id_historial})">✕</button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+}
+
+async function populateHistorialSelects() {
+  try {
+    const [pacientes, psicologos] = await Promise.all([
+      api('GET', '/pacientes'),
+      api('GET', '/psicologos')
+    ]);
+
+    $('h-paciente').innerHTML = '<option value="">— Seleccionar paciente —</option>' +
+      pacientes
+        .filter(p => p.activo)
+        .map(p => `<option value="${p.id_paciente}">${p.nombre_completo} (${p.ci})</option>`)
+        .join('');
+
+    $('h-psicologo').innerHTML = '<option value="">— Seleccionar psicólogo —</option>' +
+      psicologos
+        .filter(p => p.activo)
+        .map(p => `<option value="${p.id_psicologo}">${p.nombre_completo}</option>`)
+        .join('');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+window.editHistorial = async id => {
+  if (!puedeGestionarHistorial()) {
+    alert('No tiene permiso para editar historiales.');
+    return;
+  }
+
+  editingHistorial = id;
+  await populateHistorialSelects();
+
+  try {
+    const h = await api('GET', `/historial/${id}`);
+
+    $('h-paciente').value = h.id_paciente;
+    $('h-psicologo').value = h.id_psicologo;
+    $('h-fecha').value = h.fecha?.split('T')[0] || '';
+    $('h-diagnostico').value = h.diagnostico || '';
+    $('h-tratamiento').value = h.tratamiento || '';
+    $('h-observaciones').value = h.observaciones || '';
+
+    $('modal-historial-title').textContent = 'Editar Historial Clínico';
+    openModal('modal-historial');
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
+window.deleteHistorial = async id => {
+  if (!puedeGestionarHistorial()) {
+    alert('No tiene permiso para eliminar historiales.');
+    return;
+  }
+
+  if (!confirm('¿Desactivar este historial clínico?')) return;
+
+  try {
+    await api('DELETE', `/historial/${id}`);
+    loadHistorial();
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
+$('btn-nuevo-historial').addEventListener('click', async () => {
+  if (!puedeGestionarHistorial()) {
+    alert('No tiene permiso para crear historiales.');
+    return;
+  }
+
+  editingHistorial = null;
+  $('form-historial').reset();
+  $('modal-historial-title').textContent = 'Nuevo Historial Clínico';
+
+  $('h-fecha').value = new Date().toISOString().slice(0, 10);
+
+  await populateHistorialSelects();
+  openModal('modal-historial');
+});
+
+$('form-historial').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  if (!puedeGestionarHistorial()) {
+    alert('No tiene permiso para guardar historiales.');
+    return;
+  }
+
+  const body = {
+    id_paciente: parseInt($('h-paciente').value),
+    id_psicologo: parseInt($('h-psicologo').value),
+    fecha: $('h-fecha').value,
+    diagnostico: $('h-diagnostico').value,
+    tratamiento: $('h-tratamiento').value || null,
+    observaciones: $('h-observaciones').value || null
+  };
+
+  try {
+    if (editingHistorial) {
+      await api('PUT', `/historial/${editingHistorial}`, body);
+    } else {
+      await api('POST', '/historial', body);
+    }
+
+    closeModal('modal-historial');
+    loadHistorial();
+  } catch (err) {
+    showAlert(err.message, 'error', 'modal-alert-historial');
+  }
+});
 
 // ── CALENDAR ───────────────────────────────────
 let calDate = new Date();
@@ -955,7 +1116,8 @@ const loaders = {
   psicologos: loadPsicologos,
   pacientes: loadPacientes,
   citas: loadCitas,
-  calendario: loadCalendar
+  calendario: loadCalendar,
+  historial: loadHistorial
 };
 
 // ── CLOSE MODALS ON OVERLAY CLICK ──────────────
