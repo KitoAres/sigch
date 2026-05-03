@@ -278,40 +278,5 @@ router.post('/auth/login', async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────
-// POST /api/usuarios/debug/reset-password
-// TEMPORAL: para arreglar contraseñas en Railway
-// Luego puedes borrar esta ruta.
-// ─────────────────────────────────────────────
-router.post('/debug/reset-password', async (req, res) => {
-  const { email, nuevaContrasena } = req.body;
-
-  if (!email || !nuevaContrasena) {
-    return res.status(400).json({
-      error: 'email y nuevaContrasena son obligatorios'
-    });
-  }
-
-  try {
-    const hash = await bcrypt.hash(nuevaContrasena, 10);
-
-    const [result] = await pool.query(
-      'UPDATE usuarios SET contrasena_hash = ?, activo = 1 WHERE email = ?',
-      [hash, email]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        error: 'No se encontró un usuario con ese email'
-      });
-    }
-
-    res.json({
-      message: `Contraseña actualizada para ${email}`
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 module.exports = router;
