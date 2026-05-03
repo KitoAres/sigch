@@ -55,11 +55,29 @@
 <a href="#" data-nav="historial">
   <span class="icon">📋</span> Historial Clínico
 </a>
+
+<a href="#" data-nav="sesiones">
+  <span class="icon">🧠</span> Sesiones
+</a>
+
+<a href="#" data-nav="horarios">
+  <span class="icon">⏰</span> Horarios
+</a>
+
+<a href="#" data-nav="recordatorios">
+  <span class="icon">🔔</span> Recordatorios
+</a>
+
+<a href="#" data-nav="reportes">
+  <span class="icon">📊</span> Reportes
+</a>
+
+<a href="#" data-nav="auditoria">
+  <span class="icon">🛡️</span> Auditoría
+</a>
+
 <a href="#" data-nav="psicologos">
   <span class="icon">🩺</span> Psicólogos
-</a>
-<a href="#" data-nav="usuarios">
-  <span class="icon">👤</span> Usuarios
 </a>
   </nav>
   <div class="user-box">
@@ -232,7 +250,141 @@
       </table>
     </div>
   </section>
+<!-- SESIONES CLÍNICAS -->
+<section id="sec-sesiones" class="section">
+  <div class="section-header">
+    <div>
+      <h2>Sesiones Clínicas</h2>
+      <p>Registro de sesiones terapéuticas, técnicas y evolución del paciente</p>
+    </div>
+  </div>
 
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Paciente</th>
+          <th>Psicólogo</th>
+          <th>N° Sesión</th>
+          <th>Resumen</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="sesiones-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- HORARIOS -->
+<section id="sec-horarios" class="section">
+  <div class="section-header">
+    <div>
+      <h2>Horarios de Psicólogos</h2>
+      <p>Disponibilidad semanal de atención profesional</p>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Psicólogo</th>
+          <th>Día</th>
+          <th>Hora Inicio</th>
+          <th>Hora Fin</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="horarios-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- RECORDATORIOS -->
+<section id="sec-recordatorios" class="section">
+  <div class="section-header">
+    <div>
+      <h2>Recordatorios</h2>
+      <p>Recordatorios programados para citas psicológicas</p>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cita</th>
+          <th>Paciente</th>
+          <th>Psicólogo</th>
+          <th>Tipo</th>
+          <th>Fecha programada</th>
+          <th>Enviado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="recordatorios-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- REPORTES -->
+<section id="sec-reportes" class="section">
+  <div class="section-header">
+    <div>
+      <h2>Reportes</h2>
+      <p>Resumen general y reportes administrativos del sistema</p>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <button id="btn-reporte-resumen" class="btn btn-primary">Resumen general</button>
+      <button id="btn-reporte-citas" class="btn btn-edit">Citas registradas</button>
+    </div>
+
+    <table>
+      <thead id="reportes-head">
+        <tr>
+          <th>Indicador</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="reportes-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- AUDITORÍA -->
+<section id="sec-auditoria" class="section">
+  <div class="section-header">
+    <div>
+      <h2>Auditoría</h2>
+      <p>Registro de acciones realizadas dentro del sistema</p>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Usuario</th>
+          <th>Rol</th>
+          <th>Módulo</th>
+          <th>Acción</th>
+          <th>Descripción</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody id="auditoria-tbody"></tbody>
+    </table>
+  </div>
+</section>
+  
 </main>
 
 <!-- ══ MODALS ═════════════════════════════════════════════════════ -->
