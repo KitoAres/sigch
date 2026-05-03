@@ -252,12 +252,13 @@
   </section>
 <!-- SESIONES CLÍNICAS -->
 <section id="sec-sesiones" class="section">
-  <div class="section-header">
-    <div>
-      <h2>Sesiones Clínicas</h2>
-      <p>Registro de sesiones terapéuticas, técnicas y evolución del paciente</p>
-    </div>
+<div class="section-header">
+  <div>
+    <h2>Sesiones Clínicas</h2>
+    <p>Registro de sesiones terapéuticas, técnicas y evolución del paciente</p>
   </div>
+  <button id="btn-nueva-sesion" class="btn btn-primary">+ Nueva Sesión</button>
+</div>
 
   <div class="table-wrap">
     <table>
@@ -305,12 +306,13 @@
 
 <!-- RECORDATORIOS -->
 <section id="sec-recordatorios" class="section">
-  <div class="section-header">
-    <div>
-      <h2>Recordatorios</h2>
-      <p>Recordatorios programados para citas psicológicas</p>
-    </div>
+<div class="section-header">
+  <div>
+    <h2>Recordatorios</h2>
+    <p>Recordatorios programados para citas psicológicas</p>
   </div>
+  <button id="btn-nuevo-recordatorio" class="btn btn-primary">+ Nuevo Recordatorio</button>
+</div>
 
   <div class="table-wrap">
     <table>
@@ -601,6 +603,105 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-edit modal-cancel">Cancelar</button>
         <button type="submit" class="btn btn-primary">Guardar Historial</button>
+      </div>
+    </form>
+  </div>
+</div>
+  <!-- Modal: Sesión Clínica -->
+<div id="modal-sesion" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Nueva Sesión Clínica</h3>
+      <button class="modal-close">✕</button>
+    </div>
+
+    <div id="modal-alert-sesion" class="alert"></div>
+
+    <form id="form-sesion">
+      <div class="form-group">
+        <label>Cita *</label>
+        <select id="s-cita" required>
+          <option value="">— Seleccionar cita —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Número de sesión *</label>
+        <input id="s-numero" type="number" min="1" value="1" required>
+      </div>
+
+      <div class="form-group">
+        <label>Fecha *</label>
+        <input id="s-fecha" type="date" required>
+      </div>
+
+      <div class="form-group">
+        <label>Resumen *</label>
+        <textarea id="s-resumen" rows="3" required placeholder="Resumen de la sesión"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Técnicas aplicadas</label>
+        <textarea id="s-tecnicas" rows="2" placeholder="Ej: reestructuración cognitiva, respiración, psicoeducación"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Tareas asignadas</label>
+        <textarea id="s-tareas" rows="2" placeholder="Tareas para el paciente"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Evolución</label>
+        <textarea id="s-evolucion" rows="2" placeholder="Avances, dificultades o cambios observados"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-edit modal-cancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Sesión</button>
+      </div>
+    </form>
+  </div>
+</div>
+  <!-- Modal: Recordatorio -->
+<div id="modal-recordatorio" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Nuevo Recordatorio</h3>
+      <button class="modal-close">✕</button>
+    </div>
+
+    <div id="modal-alert-recordatorio" class="alert"></div>
+
+    <form id="form-recordatorio">
+      <div class="form-group">
+        <label>Cita *</label>
+        <select id="r-cita" required>
+          <option value="">— Seleccionar cita —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="r-tipo">
+          <option value="recordatorio_24h">Recordatorio 24h</option>
+          <option value="confirmacion">Confirmación</option>
+          <option value="cancelacion">Cancelación</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Fecha programada *</label>
+        <input id="r-fecha" type="datetime-local" required>
+      </div>
+
+      <div class="form-group">
+        <label>Mensaje *</label>
+        <textarea id="r-mensaje" rows="3" required placeholder="Mensaje del recordatorio"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-edit modal-cancel">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar Recordatorio</button>
       </div>
     </form>
   </div>
