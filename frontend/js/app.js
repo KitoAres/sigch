@@ -640,7 +640,7 @@ async function loadPacientes(q = '') {
       const acciones = puedeGestionarPacientes()
         ? `
           <button class="btn btn-edit btn-sm" onclick="editPaciente(${p.id_paciente})">✏ Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="deletePaciente(${p.id_paciente}, ${jsString(p.nombre_completo)})">✕</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePaciente(${p.id_paciente})">✕</button>
         `
         : '<span class="badge badge-gray">Solo lectura</span>';
 
@@ -686,13 +686,13 @@ window.editPaciente = async id => {
   }
 };
 
-window.deletePaciente = async (id, nombre) => {
+window.deletePaciente = async id => {
   if (!puedeGestionarPacientes()) {
     alert('No tiene permiso para eliminar pacientes.');
     return;
   }
 
-  if (!confirm(`¿Desactivar al paciente "${nombre}"?`)) return;
+  if (!confirm('¿Desactivar este paciente?')) return;
 
   try {
     const respuesta = await api('DELETE', `/pacientes/${id}`);
