@@ -535,6 +535,7 @@ window.deletePsicologo = async (id, nombre) => {
 
   try {
     await api('DELETE', `/psicologos/${id}`);
+    alert('Psicólogo desactivado correctamente.');
     loadPsicologos();
   } catch (err) {
     alert(err.message);
